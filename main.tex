@@ -1,0 +1,335 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{tikz-uml}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+
+\geometry{margin=2.5cm}
+
+% Configuration pour les listings de code
+\lstset{
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{orange},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    frame=single,
+    breaklines=true,
+    captionpos=b
+}
+
+\title{Architecture de Gateway DeepSeek}
+\author{Documentation Technique}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Ce document présente l'architecture de la Gateway DeepSeek, détaillant les différents composants, leurs interactions et les flux de données au travers de diagrammes UML.
+\end{abstract}
+
+\tableofcontents
+
+\section{Introduction}
+\label{sec:introduction}
+
+La Gateway DeepSeek est un composant critique qui sert d'interface entre les clients externes et les services internes de l'écosystème DeepSeek. Elle gère l'authentification, le routage, la limitation de débit, et la surveillance des requêtes.
+
+\section{Architecture Globale}
+\label{sec:architecture-globale}
+
+\subsection{Vue d'ensemble}
+La gateway suit une architecture microservices avec les composants principaux suivants :
+
+\begin{center}
+\begin{tikzpicture}
+\begin{umlsystem}{Architecture DeepSeek Gateway}
+\umlbasiccomponent[x=0, y=0, fill=blue!20]{Client}
+\umlbasiccomponent[x=4, y=0, fill=green!20]{API Gateway}
+\umlbasiccomponent[x=8, y=2, fill=red!20]{Service Auth}
+\umlbasiccomponent[x=8, y=0, fill=red!20]{Service LLM}
+\umlbasiccomponent[x=8, y=-2, fill=red!20]{Service Stockage}
+\end{umlsystem}
+
+\umlHVassemblyconnector[interface=HTTP/HTTPS]{Client}{API Gateway}
+\umlHVassemblyconnector[interface=REST/gRPC]{API Gateway}{Service Auth}
+\umlHVassemblyconnector[interface=REST/gRPC]{API Gateway}{Service LLM}
+\umlHVassemblyconnector[interface=REST/gRPC]{API Gateway}{Service Stockage}
+\end{tikzpicture}
+\end{center}
+
+\section{Diagramme des Composants}
+\label{sec:diagramme-composants}
+
+\begin{center}
+\begin{tikzpicture}
+% Composants principaux
+\umlbasiccomponent[y=8, x=0, fill=blue!30, width=3cm]{Load Balancer}
+
+\umlbasiccomponent[y=6, x=-3, fill=green!30, width=2.5cm]{Gateway Instance 1}
+\umlbasiccomponent[y=6, x=0, fill=green!30, width=2.5cm]{Gateway Instance 2}
+\umlbasiccomponent[y=6, x=3, fill=green!30, width=2.5cm]{Gateway Instance N}
+
+% Services partagés
+\umlbasiccomponent[y=4, x=-4, fill=red!20, width=2cm]{Redis Cache}
+\umlbasiccomponent[y=4, x=-1.5, fill=red!20, width=2cm]{Auth Service}
+\umlbasiccomponent[y=4, x=1, fill=red!20, width=2cm]{Rate Limiter}
+\umlbasiccomponent[y=4, x=3.5, fill=red!20, width=2cm]{Logger Service}
+
+% Backend services
+\umlbasiccomponent[y=2, x=-3, fill=orange!30, width=2cm]{LLM Service}
+\umlbasiccomponent[y=2, x=0, fill=orange!30, width=2cm]{Embedding Service}
+\umlbasiccomponent[y=2, x=3, fill=orange!30, width=2cm]{File Service}
+
+% Database
+\umlbasiccomponent[y=0, x=0, fill=purple!30, width=3cm]{Database Cluster}
+
+% Connexions
+\umlHVassoc{Load Balancer}{Gateway Instance 1}
+\umlHVassoc{Load Balancer}{Gateway Instance 2}
+\umlHVassoc{Load Balancer}{Gateway Instance N}
+
+% Connexions des instances gateway aux services
+\umlVHassoc{Gateway Instance 1}{Redis Cache}
+\umlVHassoc{Gateway Instance 1}{Auth Service}
+\umlVHassoc{Gateway Instance 1}{Rate Limiter}
+\umlVHassoc{Gateway Instance 1}{Logger Service}
+
+% Connexions aux backend services
+\umlVHassoc{Gateway Instance 1}{LLM Service}
+\umlVHassoc{Gateway Instance 1}{Embedding Service}
+\umlVHassoc{Gateway Instance 1}{File Service}
+
+% Connexions database
+\umlVHassoc{Auth Service}{Database Cluster}
+\umlVHassoc{LLM Service}{Database Cluster}
+\umlVHassoc{File Service}{Database Cluster}
+
+\end{tikzpicture}
+\end{center}
+
+\section{Diagramme de Séquence}
+\label{sec:diagramme-sequence}
+
+\subsection{Flux de requête API standard}
+
+\begin{center}
+\begin{tikzpicture}
+\begin{umlseqdiag}
+\umlactor[class=Client]{User}
+\umlobject[class=Load Balancer]{LB}
+\umlobject[class=API Gateway]{Gateway}
+\umlobject[class=AuthService]{Auth}
+\umlobject[class=RateLimiter]{RL}
+\umlobject[class=LLMService]{LLM}
+\umlobject[class=Logger]{Logger}
+
+\begin{umlcall}[op=POST /api/chat, return=200 OK]{User}{LB}
+\begin{umlcall}[op=Route Request, return=Forward]{LB}{Gateway}
+\begin{umlcall}[op=Validate Token, return=User Info]{Gateway}{Auth}
+\end{umlcall}
+\begin{umlcall}[op=Check Rate Limit, return=Allowed]{Gateway}{RL}
+\end{umlcall}
+\begin{umlcall}[op=Process Request, return=Response]{Gateway}{LLM}
+\end{umlcall}
+\begin{umlcall}[op=Log Request]{Gateway}{Logger}
+\end{umlcall}
+\end{umlcall}
+\end{umlcall}
+
+\end{umlseqdiag}
+\end{tikzpicture}
+\end{center}
+
+\section{Diagramme de Classes}
+\label{sec:diagramme-classes}
+
+\begin{center}
+\begin{tikzpicture}
+% Classe principale Gateway
+\umlclass[x=0, y=0]{APIGateway}{
+    - config: GatewayConfig \\
+    - authClient: AuthClient \\
+    - rateLimiter: RateLimiter \\
+    - logger: Logger \\
+    - router: Router
+}{
+    + handleRequest(req: Request): Response \\
+    + authenticate(token: string): User \\
+    + checkRateLimit(userId: string): boolean \\
+    + logRequest(req: Request, res: Response): void \\
+    + routeToService(service: string, data: any): Promise<any>
+}
+
+% Classe AuthClient
+\umlclass[x=-6, y=-3]{AuthClient}{
+    - baseUrl: string \\
+    - httpClient: HttpClient
+}{
+    + validateToken(token: string): User \\
+    + getUserPermissions(userId: string): string[]
+}
+
+% Classe RateLimiter
+\umlclass[x=0, y=-3]{RateLimiter}{
+    - redisClient: RedisClient \\
+    - limits: Map<string, Limit>
+}{
+    + isAllowed(userId: string, endpoint: string): boolean \\
+    + incrementCounter(userId: string, endpoint: string): void \\
+    + getRemainingRequests(userId: string): number
+}
+
+% Classe Logger
+\umlclass[x=6, y=-3]{Logger}{
+    - logLevel: string \\
+    - transport: Transport
+}{
+    + info(message: string, meta: any): void \\
+    + error(message: string, error: Error): void \\
+    + warn(message: string, meta: any): void \\
+    + debug(message: string, meta: any): void
+}
+
+% Classe Request
+\umlclass[x=-3, y=3]{Request}{
+    - headers: Map<string, string> \\
+    - body: any \\
+    - method: string \\
+    - url: string \\
+    - query: Map<string, string>
+}{
+    + getHeader(key: string): string \\
+    + getBody(): any \\
+    + getMethod(): string \\
+    + getUrl(): string
+}
+
+% Classe Response
+\umlclass[x=3, y=3]{Response}{
+    - status: number \\
+    - headers: Map<string, string> \\
+    - body: any
+}{
+    + setStatus(code: number): void \\
+    + setHeader(key: string, value: string): void \\
+    + setBody(data: any): void \\
+    + send(): void
+}
+
+% Relations
+\umlcompo{APIGateway}{AuthClient}
+\umlcompo{APIGateway}{RateLimiter}
+\umlcompo{APIGateway}{Logger}
+\umluniassoc{APIGateway}{Request}
+\umluniassoc{APIGateway}{Response}
+
+\end{tikzpicture}
+\end{center}
+
+\section{Diagramme de Déploiement}
+\label{sec:diagramme-deploiement}
+
+\begin{center}
+\begin{tikzpicture}
+% Nodes
+\umlbasiccomponent[x=0, y=8, fill=gray!20, width=4cm]{Cloud Provider}
+
+\umlnode[x=-4, y=6]{Load Balancer Node}
+\umlbasiccomponent[x=-4, y=4, fill=blue!20]{Load Balancer}
+
+\umlnode[x=0, y=6]{Gateway Node 1}
+\umlbasiccomponent[x=0, y=4, fill=green!20]{Gateway Service}
+\umlbasiccomponent[x=0, y=2.5, fill=yellow!20]{Docker Container}
+
+\umlnode[x=4, y=6]{Gateway Node 2}
+\umlbasiccomponent[x=4, y=4, fill=green!20]{Gateway Service}
+\umlbasiccomponent[x=4, y=2.5, fill=yellow!20]{Docker Container}
+
+\umlnode[x=-4, y=0]{Services Node}
+\umlbasiccomponent[x=-4, y=-2, fill=red!20]{Auth Service}
+\umlbasiccomponent[x=-4, y=-3.5, fill=red!20]{Rate Limit Service}
+
+\umlnode[x=0, y=0]{Database Node}
+\umlbasiccomponent[x=0, y=-2, fill=purple!20]{Redis Cluster}
+\umlbasiccomponent[x=0, y=-3.5, fill=purple!20]{PostgreSQL}
+
+\umlnode[x=4, y=0]{LLM Node}
+\umlbasiccomponent[x=4, y=-2, fill=orange!20]{LLM Service}
+\umlbasiccomponent[x=4, y=-3.5, fill=orange!20]{GPU Accelerator}
+
+% Connexions
+\umlHVassoc{Cloud Provider}{Load Balancer Node}
+\umlHVassoc{Cloud Provider}{Gateway Node 1}
+\umlHVassoc{Cloud Provider}{Gateway Node 2}
+\umlHVassoc{Cloud Provider}{Services Node}
+\umlHVassoc{Cloud Provider}{Database Node}
+\umlHVassoc{Cloud Provider}{LLM Node}
+
+\umlVHassoc{Load Balancer}{Gateway Service}
+\umlVHassoc{Gateway Service}{Docker Container}
+\umlVHassoc{Gateway Service}{Auth Service}
+\umlVHassoc{Gateway Service}{Rate Limit Service}
+\umlVHassoc{Gateway Service}{Redis Cluster}
+\umlVHassoc{Gateway Service}{LLM Service}
+
+\end{tikzpicture}
+\end{center}
+
+\section{Flux de Traitement des Requêtes}
+\label{sec:flux-traitement}
+
+\subsection{Pipeline de traitement}
+
+\begin{center}
+\begin{tikzpicture}[node distance=2cm, auto]
+\node[rectangle, draw, fill=blue!20, minimum width=3cm, minimum height=1cm] (1) {Réception Requête};
+\node[rectangle, draw, fill=green!20, minimum width=3cm, minimum height=1cm, below of=1] (2) {Validation JWT};
+\node[rectangle, draw, fill=green!20, minimum width=3cm, minimum height=1cm, below of=2] (3) {Vérification Rate Limit};
+\node[rectangle, draw, fill=green!20, minimum width=3cm, minimum height=1cm, below of=3] (4) {Parsing et Validation};
+\node[rectangle, draw, fill=orange!20, minimum width=3cm, minimum height=1cm, below of=4] (5) {Routage vers Service};
+\node[rectangle, draw, fill=orange!20, minimum width=3cm, minimum height=1cm, below of=5] (6) {Traitement Métier};
+\node[rectangle, draw, fill=red!20, minimum width=3cm, minimum height=1cm, below of=6] (7) {Formatage Réponse};
+\node[rectangle, draw, fill=red!20, minimum width=3cm, minimum height=1cm, below of=7] (8) {Journalisation};
+
+\draw[->, thick] (1) -- (2);
+\draw[->, thick] (2) -- (3);
+\draw[->, thick] (3) -- (4);
+\draw[->, thick] (4) -- (5);
+\draw[->, thick] (5) -- (6);
+\draw[->, thick] (6) -- (7);
+\draw[->, thick] (7) -- (8);
+\end{tikzpicture}
+\end{center}
+
+\section{Configuration et Technologies}
+\label{sec:configuration-technologies}
+
+\subsection{Stack Technologique}
+
+\begin{itemize}
+\item \textbf{Load Balancer}: Nginx, HAProxy
+\item \textbf{API Gateway}: Node.js, Express.js, ou Go
+\item \textbf{Authentification}: JWT, OAuth 2.0
+\item \textbf{Cache}: Redis Cluster
+\item \textbf{Base de données}: PostgreSQL, MongoDB
+\item \textbf{Monitoring}: Prometheus, Grafana
+\item \textbf{Logging}: ELK Stack (Elasticsearch, Logstash, Kibana)
+\item \textbf{Conteneurisation}: Docker, Kubernetes
+\end{itemize}
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+L'architecture de la Gateway DeepSeek est conçue pour être scalable, résiliente et sécurisée. Elle permet de gérer efficacement le trafic entrant tout en fournissant une couche d'abstraction entre les clients et les services backend.
+
+\end{document}
