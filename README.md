@@ -12,7 +12,7 @@ This document presents the microservices architecture of DeepSeek, an advanced a
 | Version | File | Description |
 |---------|------|-------------|
 | Initial | `main.tex` | Basic Architecture |
-| Improved | `main-version-ameliorer.tex` | Enhanced Architecture |
+| Improved | `main-ameliorée.tex` | Enhanced Architecture |
 
 ## 🚀 Architecture Evolution
 *Version 1 → Version 2: UML Component Diagram Improvements*
