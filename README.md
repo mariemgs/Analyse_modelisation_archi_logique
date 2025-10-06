@@ -1,89 +1,79 @@
-Project Description
-This document presents the microservices architecture of DeepSeek, an advanced artificial intelligence platform. The architecture aims to ensure scalability, high availability, and performance for modern AI workloads.
+# DeepSeek Microservices Architecture
 
-Warning
-Following discussions with team members and feedback from DeepSeek, it appears that the inference engine needs to be re-evaluated, as no blocking issues were identified during our exchanges. For this reason, we propose separating responsibilities into two services: the first dedicated to the inference engine, and the second to deep learning, to be used when the response is not known.
+## Project Description
+This document presents the microservices architecture of DeepSeek, an advanced artificial intelligence platform. The architecture aims to ensure **scalability, high availability, and performance** for modern AI workloads.
 
-Available Documents
+## ⚠️ Important Notice
+> Following discussions with team members and feedback from DeepSeek, it appears that the inference engine needs to be re-evaluated, as no blocking issues were identified during our exchanges. For this reason, we propose separating responsibilities into two services:
+> - **Inference Engine Service** - dedicated to inference operations
+> - **Deep Learning Service** - to be used when responses are not known
 
-Initial Version: main.tex - Basic Architecture
+## 📁 Available Documents
+| Version | File | Description |
+|---------|------|-------------|
+| Initial | `main.tex` | Basic Architecture |
+| Improved | `main-version-ameliorer.tex` | Enhanced Architecture |
 
-Improved Version: main-version-ameliorer.tex - Enhanced Architecture
+## 🚀 Architecture Evolution
+*Version 1 → Version 2: UML Component Diagram Improvements*
 
-Architecture Evolution
-Version 1 → Version 2: UML Component Diagram Improvements
+### Key Improvements
 
-Service Mesh
-Change: Addition of a cross-cutting Service Mesh layer
-Objectives: Secure inter-service communication, improve observability, and manage automatic policies (retry, circuit breaking).
+| # | Component | Change | Objectives |
+|---|-----------|--------|------------|
+| 1 | **Service Mesh** | Added cross-cutting Service Mesh layer | 🔒 Secure inter-service communication<br/>📊 Improve observability<br/>⚡ Automatic policies (retry, circuit breaking) |
+| 2 | **Intelligent Load Balancer** | Added Load Balancer for AI services | 🎯 Optimize routing to available GPUs<br/>📈 Manage auto-scaling<br️/>⚡ Reduce latency |
+| 3 | **Fine-tuning Service** | Separated from Training Service | 🎯 Specialize fine-tuning<br️/>🔄 Optimize resources<br️/>🔧 Facilitate maintenance |
+| 4 | **Feature Store** | Added dedicated service | 📊 Centralize feature management<br️/>🔍 Ensure consistency & traceability<br️/>♻️ Promote reuse |
+| 5 | **Message Broker** | Introduced async messaging | 🔗 Decouple services<br️/>📈 Handle traffic spikes<br️/>🎯 Event-driven architecture |
+| 6 | **Monitoring** | Consolidated monitoring services | 📊 Centralize observability<br️/>🔄 Reduce complexity<br️/>⚠️ Consistent alerts |
+| 7 | **Dependencies** | Optimized dependency graph | 🔗 Reduce coupling<br️/>🧩 Improve modularity<br️/>📊 Optimize data flows |
 
-Intelligent Load Balancer
-Change: Addition of a Load Balancer component for AI services
-Objectives: Optimize routing to available GPUs, manage auto-scaling, and reduce latency.
+## 🏗️ Technical Architecture
 
-Fine-tuning Service
-Change: Separation of the fine-tuning service from the Training Service
-Objectives: Specialize fine-tuning, optimize resources, and facilitate maintenance.
+### Architectural Layers
+| Layer | Components | Purpose |
+|-------|------------|---------|
+| **API Layer** | Gateway, Authentication | External interface & security |
+| **Service Mesh** | Istio/Envoy | Secure communication & observability |
+| **Core Services** | AI business services | Core platform functionality |
+| **Data Layer** | Databases, Storage | Data management & persistence |
+| **Infrastructure** | Support services | Platform operations |
 
-Feature Store
-Change: Addition of a dedicated Feature Store service
-Objectives: Centralize feature management, ensure consistency and traceability, and promote reuse.
+### 🛠️ Technologies Used
+| Category | Technologies |
+|----------|-------------|
+| **Orchestration** | Kubernetes |
+| **Service Mesh** | Istio, Envoy |
+| **API Gateway** | Kong, Envoy |
+| **Programming** | Python, Go |
+| **Databases** | PostgreSQL, Redis, Vector DB (Milvus/Pinecone) |
+| **Messaging** | Apache Kafka |
+| **Monitoring** | Prometheus, Grafana |
+| **Logging** | ELK Stack |
 
-Message Broker
-Change: Introduction of an asynchronous messaging service
-Objectives: Decouple services, handle traffic spikes, and promote event-driven architecture.
+## ✨ Advantages of Improved Version
 
-Consolidated Monitoring
-Change: Grouping of monitoring services
-Objectives: Centralize observability, reduce complexity, and facilitate consistent alerts.
+### 🎯 **Enhanced Scalability**
+- Intelligent load balancing across GPU resources
+- Better handling of variable AI workloads
 
-Dependency Reorganization
-Change: Optimization of the dependency graph
-Objectives: Reduce coupling, improve modularity, and optimize data flows.
+### 🔒 **Improved Security**
+- Service Mesh with mTLS for secure communication
+- Automated security policies
 
-Technical Architecture
+### 📊 **Superior Observability**
+- Consolidated monitoring with distributed tracing
+- Real-time performance insights
 
-Architectural Layers
+### 🛡️ **Increased Resilience**
+- Circuit breakers and retry policies
+- Graceful failure handling
 
-API: Gateway and authentication
+### ⚡ **Optimized Performance**
+- Feature Store for efficient data access
+- Intelligent caching strategies
 
-Service Mesh: Secure communication and observability
-
-Core Services: AI business services
-
-Data: Management and storage
-
-Infrastructure: Support services
-
-Technologies Used
-
-Orchestration: Kubernetes
-
-Service Mesh: Istio/Envoy
-
-API Gateway: Kong/Envoy
-
-Languages: Python/Go
-
-Databases: PostgreSQL, Redis, Vector DB (Milvus/Pinecone)
-
-Message Queue: Apache Kafka
-
-Monitoring: Prometheus/Grafana
-
-Logging: ELK Stack
-
-Advantages of the Improved Version
-
-Better scalability through intelligent load balancing
-
-Enhanced security with Service Mesh and mTLS
-
-Consolidated observability with distributed tracing
-
-Increased resilience via circuit breakers and retry policies
-
-Optimized performance with Feature Store and cache
-
-Improved maintainability through decoupled services
-
+### 🔧 **Better Maintainability**
+- Decoupled services with clear boundaries
+- Simplified deployment and updates
