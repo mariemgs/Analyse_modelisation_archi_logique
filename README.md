@@ -3,11 +3,6 @@
 ## Project Description
 This document presents the microservices architecture of DeepSeek, an advanced artificial intelligence platform. The architecture aims to ensure **scalability, high availability, and performance** for modern AI workloads.
 
-## ⚠️ Important Notice
-> Following discussions with team members and feedback from DeepSeek, it appears that the inference engine needs to be re-evaluated, as no blocking issues were identified during our exchanges. For this reason, we propose separating responsibilities into two services:
-> - **Inference Engine Service** - dedicated to inference operations
-> - **Deep Learning Service** - to be used when responses are not known
-
 ## 📁 Available Documents
 | Version | File | Description |
 |---------|------|-------------|
